@@ -23,5 +23,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  "include": ["src/**/*"], // or wherever your TypeScript files are
+  "exclude": ["node_modules"]
 }

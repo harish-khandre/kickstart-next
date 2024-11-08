@@ -1,11 +1,8 @@
 import consola from "consola"
-import type { PackageManager } from "./types"
-
-export const getUserPkgManager: () => PackageManager = () => {
+export const getUserPkgManager = () => {
   // This environment variable is set by npm and yarn but pnpm seems less consistent
   const userAgent = process.env.npm_config_user_agent
   consola.error("userAgent", userAgent)
-
   if (userAgent) {
     if (userAgent.startsWith("yarn")) {
       return "yarn"

@@ -1,7 +1,6 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
-import tseslint from "typescript-eslint";
-
+import globals from "globals"
+import pluginJs from "@eslint/js"
+import tseslint from "typescript-eslint"
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
@@ -11,14 +10,14 @@ export default [
   ...tseslint.configs.recommended,
   {
     rules: {
-      'no-undef': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { caughtErrors: 'none' }],
-      '@typescript-eslint/no-use-before-define': 'off',
-      'import/un-resolved': 'off',
-      'multiline-ternary': 'off',
-      'no-unused-expressions': 'off',
-      'no-unused-vars': 'off',
-      'no-use-before-define': 'off',
-    }
-  }
-];
+      "no-undef": "off",
+      "@typescript-eslint/no-unused-vars": ["error", { caughtErrors: "none" }],
+      "@typescript-eslint/no-use-before-define": "off",
+      "import/un-resolved": "off",
+      "multiline-ternary": "off",
+      "no-unused-expressions": "off",
+      "no-unused-vars": "off",
+      "no-use-before-define": "off",
+    },
+  },
+]
