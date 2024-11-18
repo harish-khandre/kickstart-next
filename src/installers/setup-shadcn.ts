@@ -10,6 +10,8 @@ export default async function setupShadcn(projectPath: string) {
         'shadcn@latest',
         'init',
         '-y', // Skip confirmation prompts
+        "-d",
+        "-f"
       ],
       {
         cwd: projectPath,

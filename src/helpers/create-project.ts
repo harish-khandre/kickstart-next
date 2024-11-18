@@ -2,7 +2,6 @@ import consola from 'consola';
 import fs from 'fs-extra';
 import path from 'path';
 import { execa } from 'execa';
-import setupShadcn from '../installers/setup-shadcn';
 
 export default async function createProject({
   projectName,
@@ -20,8 +19,6 @@ export default async function createProject({
     await fs.ensureDir(projectPath);
 
     await fs.copy(templatePath, projectPath);
-
-    await execa('npm', ['install'], { cwd: projectPath, stdio: 'inherit' });
 
     consola.success(`Project created successfully at ${projectPath}`);
     consola.info(
