@@ -53,3 +53,7 @@
 # Questions
 
 1. Should we mix kirimase and t3 stack like initiate with next.js project and then let the user how he wants his next.js repo and that goes for same commands like shadcn ... like give options with initializers like of next.js shadcn and all and where the manual setup is required we come and give them template but for that i have to consider what options did user selected in the initializers and based on that i have to curate the templates
+
+# Extra
+
+- [] Add SEO optimizations with google analytics functions from next-froge and techniques from next faster for performance optimizations

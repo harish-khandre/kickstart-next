@@ -3,12 +3,15 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "lint": "bun eslint . --ext .ts",
+    "lint": "bun eslint .",
     "format": "bun prettier --write ."
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",
     "@types/bun": "latest",
+    "@types/execa": "^2.0.2",
+    "@types/figlet": "^1.7.0",
+    "@types/fs-extra": "^11.0.4",
     "eslint": "^9.14.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.31.0",
@@ -23,6 +26,12 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@clack/prompts": "^0.7.0"
+    "@clack/prompts": "^0.7.0",
+    "consola": "^3.2.3",
+    "execa": "^9.5.1",
+    "figlet": "^1.8.0",
+    "fs-extra": "^11.2.0",
+    "ts-pattern": "^5.5.0",
+    "zod": "^3.23.8"
   }
 }
