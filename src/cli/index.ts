@@ -27,7 +27,8 @@ export default async function initializeCli() {
           initialValue: true,
         });
       },
-      backend: () => {
+      backend: ({ results }) => {
+        if (results.payload === true) return undefined;
         return p.select({
           message: `Pick your backend choice`,
           initialValue: 'trpc',
@@ -40,7 +41,8 @@ export default async function initializeCli() {
         });
       },
       db: async ({ results }) => {
-        if (results.backend === 'none') return undefined;
+        if (results.backend === 'none' || results.payload === true)
+          return undefined;
         return await p.select({
           message: `Pick a Database`,
           initialValue: 'mongoDB',
@@ -48,29 +50,39 @@ export default async function initializeCli() {
             { value: 'mongoDB', label: 'MongoDB' },
             { value: 'postgres', label: 'Postgres' },
             { value: 'mySql', label: 'MySQL' },
+            // add more options here like sqlite, etc
           ],
         });
       },
       orm: async ({ results }) => {
-        if (results.backend === 'none') return undefined;
+        if (results.backend === 'none' || results.payload === true) {
+          return undefined;
+        }
+        const options =
+          results.db === 'mongodb'
+            ? [{ value: 'prisma', label: 'Prisma' }]
+            : [
+                { value: 'prisma', label: 'Prisma' },
+                { value: 'drizzle', label: 'Drizzle' },
+              ]; // Include both options otherwise
+
         return await p.select({
           message: `Pick an ORM`,
           initialValue: 'prisma',
-          options: [
-            { value: 'prisma', label: 'Prisma' },
-            { value: 'drizzle', label: 'Drizzle' },
-          ],
+          options,
         });
       },
       localDB: ({ results }) => {
-        if (results.backend === 'none') return undefined;
+        if (results.backend === 'none' || results.payload === true)
+          return undefined;
         return p.confirm({
           message: 'Would you like a local Database?',
           initialValue: true,
         });
       },
       auth: async ({ results }) => {
-        if (results.backend === 'none') return undefined;
+        if (results.backend === 'none' || results.payload === true)
+          return undefined;
         return await p.select({
           message: `Pick your Auth service`,
           initialValue: 'auth.js',
@@ -82,7 +94,8 @@ export default async function initializeCli() {
         });
       },
       authProviders: async ({ results }) => {
-        if (results.backend === 'none') return undefined;
+        if (results.backend === 'none' || results.payload === true)
+          return undefined;
         return await p.multiselect({
           message: 'Pick Auth Providers',
           options: [

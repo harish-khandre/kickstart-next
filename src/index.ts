@@ -24,7 +24,7 @@ import setupLocalDB from './helpers/setup-local-db';
 import setupOrm from './helpers/setup-orm';
 import setupDb from './helpers/setup-db';
 
-const CURR_DIR = process.cwd();
+let projectPath: string | undefined;
 
 export default async function main() {
   try {
@@ -40,14 +40,16 @@ export default async function main() {
       .run();
 
     await match(validatedConfig)
-      .with({ shadcn: true }, async () => {
-        await setupHandlers.setupShadcn();
-      })
       .with({ payload: true }, async () => {
         await setupHandlers.setupPayload();
       })
+      .with({ shadcn: true }, async () => {
+        await setupHandlers.setupShadcn();
+      })
       .with({ backend: P.not(Backend.NONE) }, async (config) => {
-        await setupHandlers.setupBackend(config.backend, config);
+        if (!validatedConfig.payload) {
+          await setupHandlers.setupBackend(config.backend, config);
+        }
       })
       .with({ git: true }, async () => {
         await setupHandlers.setupGit();
@@ -80,7 +82,7 @@ main().catch((error) => {
 const setupHandlers = {
   async createProject(name: string) {
     try {
-      await createProject({ projectName: name });
+      projectPath = await createProject({ projectName: name });
     } catch (error) {
       consola.error('Failed to create project:', error);
       process.exit(1);
@@ -89,7 +91,7 @@ const setupHandlers = {
 
   async setupShadcn() {
     try {
-      await setupShadcn(CURR_DIR);
+      await setupShadcn();
     } catch (error) {
       consola.error('Failed to setup Shadcn:', error);
       process.exit(1);
@@ -98,7 +100,7 @@ const setupHandlers = {
 
   async setupPayload() {
     try {
-      await setupPayload(CURR_DIR);
+      await setupPayload(projectPath);
     } catch (error) {
       consola.error('Failed to setup Payload:', error);
       process.exit(1);
@@ -112,12 +114,8 @@ const setupHandlers = {
         .otherwise(async () => {
           await setupBackend(backend);
 
-          if (config.db) {
-            await setupDb(config.db);
-          }
-
-          if (config.orm) {
-            await setupOrm(config.orm);
+          if (config.orm && config.db) {
+            await setupOrm(config.orm, config.db);
           }
 
           if (config.localDB && config.db) {
@@ -128,11 +126,10 @@ const setupHandlers = {
             await setupAuth(config.auth);
           }
 
-          if (
-            config.authProviders &&
-            config.authProviders !== AuthProvider.NONE
-          ) {
-            await setupAuthProviders(config.authProviders);
+          if (config.authProviders && !config.authProviders.includes('none')) {
+            for (const provider of config.authProviders) {
+              await setupAuthProviders(provider);
+            }
           }
         });
     } catch (error) {

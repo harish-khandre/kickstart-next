@@ -1,7 +1,7 @@
 import consola from 'consola';
 import fs from 'fs-extra';
 import path from 'path';
-import { execa } from 'execa';
+import { $ } from 'execa';
 
 export default async function createProject({
   projectName,
@@ -21,9 +21,10 @@ export default async function createProject({
     await fs.copy(templatePath, projectPath);
 
     consola.success(`Project created successfully at ${projectPath}`);
-    consola.info(
-      'To add shadcn/ui components, run: npx shadcn-ui@latest add [component-name]'
-    );
+
+    $({ cwd: projectPath });
+
+    return projectPath;
   } catch (error) {
     consola.error('Project creation failed:', error);
     // Clean up if project creation fails

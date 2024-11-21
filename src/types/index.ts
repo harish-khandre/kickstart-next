@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Define strict enums for better type safety
 export const Backend = {
   TRPC: 'trpc',
   GRAPHQL: 'graphql',
@@ -25,21 +24,14 @@ export const Auth = {
   NONE: 'none',
 } as const;
 
-export const AuthProvider = {
-  GOOGLE: 'google',
-  GITHUB: 'github',
-  APPLE: 'apple',
-  NONE: 'none',
-} as const;
+export const AuthProvider = ['google', 'github', 'apple', 'none'] as const;
 
-// Define types using the enums
 export type BackendType = (typeof Backend)[keyof typeof Backend];
 export type DatabaseType = (typeof Database)[keyof typeof Database];
 export type ORMType = (typeof ORM)[keyof typeof ORM];
 export type AuthType = (typeof Auth)[keyof typeof Auth];
-export type AuthProviderType = (typeof AuthProvider)[keyof typeof AuthProvider];
+export type AuthProviderType = (typeof AuthProvider)[number]; // Extracts the union type
 
-// Zod schema for runtime validation
 export const ConfigOptionsSchema = z.object({
   name: z.string().min(1),
   shadcn: z.boolean(),
@@ -49,14 +41,7 @@ export const ConfigOptionsSchema = z.object({
   orm: z.enum([ORM.PRISMA, ORM.DRIZZLE]).optional(),
   localDB: z.boolean().optional(),
   auth: z.enum([Auth.AUTH_JS, Auth.LUCIA, Auth.NONE]).optional(),
-  authProviders: z
-    .enum([
-      AuthProvider.GOOGLE,
-      AuthProvider.GITHUB,
-      AuthProvider.APPLE,
-      AuthProvider.NONE,
-    ])
-    .optional(),
+  authProviders: z.array(z.enum([...AuthProvider])).optional(), // Accepts an array of values
   git: z.boolean(),
   sst: z.boolean(),
 });

@@ -1,5 +1,16 @@
 import consola from 'consola';
+import { execa } from 'execa';
 
 export default async function setupGit() {
-  consola.info('Git initialized!');
+  try {
+    const { stderr } = await execa('git', ['init']);
+    if (stderr) {
+      consola.error(stderr);
+      process.exit(1);
+    }
+    consola.info('Git initialized!');
+  } catch (error) {
+    consola.error('Error setting up Git:', error);
+    process.exit(1);
+  }
 }
