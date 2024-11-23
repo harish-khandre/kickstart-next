@@ -1,5 +1,4 @@
 import consola from 'consola';
-import { execa } from 'execa';
 import fs from 'fs-extra';
 
 export default async function setupPayload(projectPath: string | undefined) {
@@ -11,7 +10,8 @@ export default async function setupPayload(projectPath: string | undefined) {
     consola.info('Setting up payload');
     Promise.all([
       await fs.remove(`${projectPath}/app/layout.tsx`),
-      await execa({ timeout: 5000 })`npx create-payload-app@beta`,
+      // await $({ timeout: 5000 })`npx create-payload-app@beta`,
+      // copy pase the folders and files
     ]);
     consola.success('Payload');
     process.exit(0);

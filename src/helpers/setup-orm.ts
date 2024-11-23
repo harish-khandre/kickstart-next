@@ -1,169 +1,225 @@
-//TODO: setup orm and after setting up orm setup db based on the db
 import consola from 'consola';
 import type { DatabaseType, ORMType } from '../types';
-import { match, P } from 'ts-pattern';
-import { execa } from 'execa';
+import { match } from 'ts-pattern';
+import { $ } from 'execa';
 import fs from 'fs-extra';
+import path from 'path';
 
 export default async function setupOrm(orm: ORMType, db: DatabaseType) {
-  consola.info('orm and db initialized!');
+  consola.info('Initializing ORM and database setup...');
 
-  match(orm)
-    .with('prisma', async () => {
-      setupPrisma();
-    })
-    .with('drizzle', async () => {
-      setupDrizzle();
-    })
-    .run();
+  // Execute ORM setup first and await its completion
+  await match(orm)
+    .with('prisma', () => setupPrisma())
+    .with('drizzle', () => setupDrizzle())
+    .exhaustive();
 
-  match(db)
-    .with('mongoDB', async () => {
-      setupMongo();
-    })
-    .with('postgres', async () => {
-      setupPostgres(orm);
-    })
-    .with('mySql', async () => {
-      setupMysql(orm);
-    })
-    .run();
+  // Then execute database setup
+  await match(db)
+    .with('mongoDB', () => setupMongo())
+    .with('postgres', () => setupPostgres(orm))
+    .with('mySql', () => setupMysql(orm))
+    .exhaustive();
+
+  consola.success('ORM and database setup completed successfully!');
 }
 
 async function setupPrisma() {
   try {
     await Promise.all([
-      execa('bun', ['add', 'prisma']),
-      execa('bunx', ['prisma', 'init']),
+      $`bun add -D prisma`,
+      $`bun add @prisma/client`,
+      $`bunx prisma init`,
     ]);
-    process.exit(0);
   } catch (error) {
-    consola.error('Error setting up prisma', error);
-    process.exit(1);
+    consola.error('Error setting up Prisma:', error);
+    throw error; // Let the main function handle the error
   }
 }
 
 async function setupDrizzle() {
   try {
     await Promise.all([
-      execa('bun', ['add', 'drizzle-orm']),
-      execa('bun', ['add', '-D', 'drizzle-kit']),
-      fs.ensureDir('/db'),
-      fs.ensureFile('/db/drizzle.ts'),
-      fs.ensureFile('/db/schema.ts'),
+      $`bun add drizzle-orm`,
+      $`bun add -D drizzle-kit`,
+      fs.ensureDir('src/db'),
+      fs.writeFile('src/db/drizzle.ts', ''),
+      fs.writeFile('src/db/schema.ts', ''),
     ]);
-    process.exit(0);
   } catch (error) {
-    consola.error('Error setting up prisma', error);
-    process.exit(1);
+    consola.error('Error setting up Drizzle:', error);
+    throw error;
   }
 }
 
 async function setupMongo() {
   try {
-    await Promise.all([
-      fs.writeFile(
-        '/prisma/schema.prisma',
-        `
-        generator client {
-         provider = "prisma-client-js"
-        }
+    const schemaContent = `
+generator client {
+  provider = "prisma-client-js"
+}
 
-        datasource db {
-         provider = "mongodb"
-         url      = env("DATABASE_URL")
-        }
-       `
-      ),
-    ]);
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+`;
 
-    process.exit(0);
+    await fs.ensureDir('prisma');
+    await fs.writeFile(
+      path.join('prisma', 'schema.prisma'),
+      schemaContent.trim()
+    );
+    consola.success('Prisma with MongoDB setup completed');
   } catch (error) {
-    process.exit(1);
+    consola.error('Error setting up MongoDB with Prisma:', error);
+    throw error;
   }
 }
 
 async function setupPostgres(orm: ORMType) {
   if (orm === 'prisma') {
     try {
-      await fs.writeFile(
-        '/prisma/schema.prisma',
-        `
-        generator client {
-         provider = "prisma-client-js"
-        }
+      const schemaContent = `
+generator client {
+  provider = "prisma-client-js"
+}
 
-        datasource db {
-         provider = "postgresql"
-         url      = env("DATABASE_URL")
-        }
-       `
-      ),
-        process.exit(0);
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+`;
+      await fs.ensureDir('prisma');
+      await fs.writeFile(
+        path.join('prisma', 'schema.prisma'),
+        schemaContent.trim()
+      );
+      consola.success('Prisma with PostgreSQL setup completed');
     } catch (error) {
-      process.exit(1);
+      consola.error('Error setting up PostgreSQL with Prisma:', error);
+      throw error;
     }
   } else if (orm === 'drizzle') {
     try {
-      await Promise.all([
-        execa('bun', ['add', 'pg', 'dotenv']),
-        execa('bun', ['add', '-D', '@types/pg']),
-        fs.ensureFile('/db/index.ts'),
-        fs.writeFile(
-          '/db/index.ts',
-          `
-        import 'dotenv/config';
-        import { drizzle } from 'drizzle-orm/node-postgres';
+      const dbIndexContent = `
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from "pg";
 
-        const db = drizzle(process.env.DATABASE_URL!);
-        `
-        ),
-        fs.ensureFile('src/db/schema.ts'),
-        fs.writeFile('src/db/schema.ts', `
-// Example schema
-import { int, mysqlTable, serial, varchar } from 'drizzle-orm/mysql-core';
-
-export const usersTable = mysqlTable('users_table', {
-  id: serial().primaryKey(),
-  name: varchar({ length: 255 }).notNull(),
-  age: int().notNull(),
-  email: varchar({ length: 255 }).notNull().unique(),
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL!,
 });
 
-`),
-        fs.ensureFile('drizzle.config.ts'),
-        fs.writeFile('drizzle.config.ts', `
-// Example schema
-import { int, mysqlTable, serial, varchar } from 'drizzle-orm/mysql-core';
+export const db = drizzle(pool);
+`;
 
+      const schemaContent = `
+import { pgTable, serial, varchar, integer } from 'drizzle-orm/pg-core';
+
+export const usersTable = pgTable('users_table', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  age: integer('age').notNull(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+});
+`;
+
+      const drizzleConfigContent = `
 import 'dotenv/config';
-import { defineConfig } from 'drizzle-kit';
-export default defineConfig({
+import type { Config } from 'drizzle-kit';
+
+export default {
   out: './drizzle',
   schema: './src/db/schema.ts',
-  dialect: 'mysql',
+  driver: 'pg',
   dbCredentials: {
-    url: process.env.DATABASE_URL!,
+    connectionString: process.env.DATABASE_URL!,
   },
-});
+} satisfies Config;
+`;
 
-`),
+      await Promise.all([
+        $`bun add pg dotenv`,
+        $`bun add -D @types/pg`,
+        fs.ensureDir('src/db'),
+        fs.writeFile('src/db/index.ts', dbIndexContent.trim()),
+        fs.writeFile('src/db/schema.ts', schemaContent.trim()),
+        fs.writeFile('drizzle.config.ts', drizzleConfigContent.trim()),
       ]);
-      process.exit(0);
+      consola.success('Drizzle with PostgreSQL setup completed');
     } catch (error) {
-      process.exit(1);
+      consola.error('Error setting up PostgreSQL with Drizzle:', error);
+      throw error;
     }
   }
 }
 
-function setupMysql(orm: ORMType) {
-
+async function setupMysql(orm: ORMType) {
   try {
+    if (orm === 'prisma') {
+      const schemaContent = `
+generator client {
+  provider = "prisma-client-js"
+}
 
-    process.exit(0);
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+`;
+      await fs.ensureDir('prisma');
+      await fs.writeFile(
+        path.join('prisma', 'schema.prisma'),
+        schemaContent.trim()
+      );
+      consola.success('Prisma with MySQL setup completed');
+    } else if (orm === 'drizzle') {
+      const dbIndexContent = `
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/mysql2';
+import mysql from 'mysql2/promise';
+
+const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+export const db = drizzle(connection);
+`;
+
+      const schemaContent = `
+import { mysqlTable, serial, varchar, int } from 'drizzle-orm/mysql-core';
+
+export const usersTable = mysqlTable('users_table', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  age: int('age').notNull(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+});
+`;
+
+      const drizzleConfigContent = `
+import 'dotenv/config';
+import type { Config } from 'drizzle-kit';
+
+export default {
+  out: './drizzle',
+  schema: './src/db/schema.ts',
+  driver: 'mysql2',
+  dbCredentials: {
+    uri: process.env.DATABASE_URL!,
+  },
+} satisfies Config;
+`;
+
+      await Promise.all([
+        $`bun add mysql2`,
+        fs.ensureDir('src/db'),
+        fs.writeFile('src/db/index.ts', dbIndexContent.trim()),
+        fs.writeFile('src/db/schema.ts', schemaContent.trim()),
+        fs.writeFile('drizzle.config.ts', drizzleConfigContent.trim()),
+      ]);
+      consola.success('Drizzle with MySQL setup completed');
+    }
   } catch (error) {
-    process.exit(1);
+    consola.error('Error setting up MySQL:', error);
+    throw error;
   }
-
-
 }

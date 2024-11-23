@@ -57,3 +57,8 @@
 # Extra
 
 - [] Add SEO optimizations with google analytics functions from next-froge and techniques from next faster for performance optimizations
+
+# priority tasks | priority
+
+1. creating payload template : low
+2. graphql backend setup : low

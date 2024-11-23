@@ -1,12 +1,10 @@
 import consola from 'consola';
 import type { BackendType } from '../types';
 import fs from 'fs-extra';
-import { $, execa } from 'execa';
+import { $ } from 'execa';
 import { match } from 'ts-pattern';
 
 export default async function setupBackend(backend: BackendType) {
-  // $({ cwd: '/app' });
-
   await match(backend)
     .with('rest', async () => {
       setupRest();
@@ -34,20 +32,13 @@ async function setupRest() {
 
 async function setupTrpc() {
   try {
-    execa('bun', [
-      'add',
-      '@tanstack/react-query',
-      '@trpc/client',
-      '@trpc/react-query',
-      '@trpc/server',
-      '@trpc/next',
-      'zod',
-    ]);
-    await fs.ensureDir('app/api/trpc/[trpc]');
-    await fs.ensureFile('app/api/trpc/[trpc]/route.ts');
-    await fs.writeFile(
-      'app/api/trpc/[trpc]/route.ts',
-      `
+    await Promise.all([
+      $`bun add @tanstack/react-query @trpc/react-query @trpc/server zod`,
+      fs.ensureDir('app/api/trpc/[trpc]'),
+      fs.ensureFile('app/api/trpc/[trpc]/route.ts'),
+      fs.writeFile(
+        'app/api/trpc/[trpc]/route.ts',
+        `
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
 import { appRouter } from '@/server/api/router'
 import { createTRPCContext } from '@/server/api/context'
@@ -63,13 +54,13 @@ createContext: createTRPCContext,
 
 export { handler as GET, handler as POST }
 `
-    );
+      ),
 
-    await fs.ensureDir('app/server/api/router');
+      fs.ensureDir('app/server/api/router'),
 
-    await fs.writeFile(
-      'app/server/api/trpc.ts',
-      `
+      fs.writeFile(
+        'app/server/api/trpc.ts',
+        `
 import { initTRPC, TRPCError } from '@trpc/server'
 import { ZodError } from 'zod'
 import SuperJSON from 'superjson'
@@ -92,11 +83,11 @@ export const router = t.router
 export const publicProcedure = t.procedure
 export const protectedProcedure = t.procedure
 `
-    );
+      ),
 
-    await fs.writeFile(
-      'app/server/api/router/index.ts',
-      `
+      fs.writeFile(
+        'app/server/api/router/index.ts',
+        `
 /* example 
 import { router } from '../trpc'
 import { contactRouter } from './contact/contact.router'
@@ -112,7 +103,8 @@ otp: otpRouter,
 export type AppRouter = typeof appRouter
 */
 `
-    );
+      ),
+    ]);
     consola.success('successfully set up trpc!');
   } catch (err) {
     consola.error(err);

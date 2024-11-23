@@ -1,17 +1,11 @@
-import { execa } from 'execa';
+import { $ } from 'execa';
 import consola from 'consola';
 
 export default async function setupShadcn() {
   try {
     consola.info('Setting up shadcn/ui');
 
-    const { stderr } = await execa('npx', [
-      'shadcn@latest',
-      'init',
-      '-d',
-      '-f',
-      '-y',
-    ]);
+    const { stderr } = await $`npx shadcn@latest init -d -f -y`;
 
     if (stderr) {
       consola.error(stderr);

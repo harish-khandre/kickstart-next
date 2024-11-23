@@ -16,14 +16,13 @@ export default async function createProject({
   );
 
   try {
-    await fs.ensureDir(projectPath);
-
-    await fs.copy(templatePath, projectPath);
-
-    consola.success(`Project created successfully at ${projectPath}`);
+    await Promise.all([
+      fs.ensureDir(projectPath),
+      fs.copy(templatePath, projectPath),
+    ]);
 
     $({ cwd: projectPath });
-
+    consola.success(`Project created successfully at ${projectPath}`);
     return projectPath;
   } catch (error) {
     consola.error('Project creation failed:', error);

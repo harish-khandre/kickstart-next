@@ -12,7 +12,7 @@ export default async function initializeCli() {
           message: 'What will your project be called?',
           placeholder: 'my-app',
           initialValue: 'my-app',
-          validate: validateAppName,
+          // validate: validateAppName,
         });
       },
       shadcn: () => {
@@ -28,7 +28,6 @@ export default async function initializeCli() {
         });
       },
       backend: ({ results }) => {
-        if (results.payload === true) return undefined;
         return p.select({
           message: `Pick your backend choice`,
           initialValue: 'trpc',
