@@ -1,5 +1,8 @@
 # kickstart-next
 
+Cli Tool to create a new Next.js project with other tools like Payload CMS, TRPC, prisma local DB setup and other tools.
+
+
 To install dependencies:
 
 ```bash
@@ -9,7 +12,6 @@ bun install
 To run:
 
 ```bash
-bun run index.ts
+bun run ./src/index.ts
 ```
 
-This project was created using `bun init` in bun v1.1.33. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
